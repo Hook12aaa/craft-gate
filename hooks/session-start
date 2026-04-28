@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# SessionStart hook for craftsmanship-test plugin.
+# Emits the using-craftsmanship-test skill body as additionalContext on
+# CODE_PROJECT verdicts; emits silent on SUPPRESS.
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# shellcheck source=/dev/null
+source "${PLUGIN_ROOT}/config.sh"
+
+if [ -n "${CLAUDE_PROJECT_DIR:-}" ] && [ -f "${CLAUDE_PROJECT_DIR}/.craftsmanship-test.sh" ]; then
+  override="${CLAUDE_PROJECT_DIR}/.craftsmanship-test.sh"
+  if bash -n "$override" 2>/dev/null; then
+    # shellcheck source=/dev/null
+    source "$override"
+  fi
+fi
+
+# shellcheck source=/dev/null
+source "${SCRIPT_DIR}/lib/detect-project-type.sh"
+
+verdict="$(craft_detect_project_type "${CLAUDE_PROJECT_DIR:-$PWD}")"
+verdict="${verdict//$'\n'/}"
+
+if [ "$verdict" != "CODE_PROJECT" ]; then
+  printf '' | bash "${SCRIPT_DIR}/lib/emit-context.sh" SessionStart
+  exit 0
+fi
+
+skill_body=$(cat "${PLUGIN_ROOT}/skills/using-craftsmanship-test/SKILL.md")
+
+payload=$(cat <<EOF
+<EXTREMELY_IMPORTANT>
+The craftsmanship-test plugin is active.
+
+HARD RULE: When you write or modify a comment in source code, invoke the \`craftsmanship-test:craft-gate\` skill via the Skill tool and emit one verdict per comment (CRAFT GATE: KEEP / STRIP — <rule> / REWRITE — <text>) before the edit completes.
+
+If the verdict is STRIP, delete the comment from the diff. If REWRITE, replace it with the verdict's replacement text. Do not ship comments that have not earned a KEEP verdict.
+
+Below is the full content of your \`craftsmanship-test:using-craftsmanship-test\` bootstrap skill, which names the gate triggers. For the gate itself, invoke the \`craftsmanship-test:craft-gate\` skill.
+
+Comments are a last resort. If the code can say it, the code should.
+
+${skill_body}
+</EXTREMELY_IMPORTANT>
+EOF
+)
+
+printf '%s' "$payload" | bash "${SCRIPT_DIR}/lib/emit-context.sh" SessionStart

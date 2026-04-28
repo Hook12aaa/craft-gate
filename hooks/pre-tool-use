@@ -19,6 +19,17 @@ if [ -n "${CLAUDE_PROJECT_DIR:-}" ] && [ -f "${CLAUDE_PROJECT_DIR}/.craftsmanshi
   fi
 fi
 # shellcheck source=/dev/null
+source "${SCRIPT_DIR}/lib/detect-project-type.sh"
+
+verdict="$(craft_detect_project_type "${CLAUDE_PROJECT_DIR:-$PWD}")"
+verdict="${verdict//$'\n'/}"
+
+if [ "$verdict" != "CODE_PROJECT" ]; then
+  printf '' | bash "${SCRIPT_DIR}/lib/emit-context.sh" PreToolUse
+  exit 0
+fi
+
+# shellcheck source=/dev/null
 source "${SCRIPT_DIR}/lib/detect-source-file.sh"
 
 # Read stdin into a bash var first so the heredoc does not displace it,

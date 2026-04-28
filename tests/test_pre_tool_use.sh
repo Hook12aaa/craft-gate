@@ -86,4 +86,22 @@ out=$(cat "${FIX_DIR}/multiedit_with_comments_go.json" | "$HOOK")
 assert_contains "MultiEdit with mixed sub-edits emits reminder" "$out" "CRAFT GATE AUTO-TRIGGERED"
 assert_contains "MultiEdit reminder mentions per-sub-edit obligation" "$out" "per sub-edit"
 
+# Educational project: pre-tool-use exits silent even on a source-file edit
+d=$(mktemp -d); touch "$d/_quarto.yml"
+unset CRAFTSMANSHIP_PROJECT_TYPE
+out=$(CLAUDE_PROJECT_DIR="$d" CLAUDE_PLUGIN_ROOT="$PLUGIN_ROOT" \
+  bash "${PLUGIN_ROOT}/hooks/pre-tool-use" \
+  <<<'{"tool_name":"Edit","tool_input":{"file_path":"main.py"}}')
+assert_not_contains "pre-tool-use silent on SUPPRESS verdict" "$out" "CRAFT GATE AUTO-TRIGGERED"
+rm -rf "$d"
+
+# Override=suppress silences edit on a real code file
+d=$(mktemp -d); touch "$d/main.py"
+printf 'CRAFTSMANSHIP_PROJECT_TYPE=suppress\n' > "$d/.craftsmanship-test.sh"
+out=$(CLAUDE_PROJECT_DIR="$d" CLAUDE_PLUGIN_ROOT="$PLUGIN_ROOT" \
+  bash "${PLUGIN_ROOT}/hooks/pre-tool-use" \
+  <<<'{"tool_name":"Edit","tool_input":{"file_path":"main.py"}}')
+assert_not_contains "pre-tool-use override=suppress silences" "$out" "CRAFT GATE AUTO-TRIGGERED"
+rm -rf "$d"
+
 exit $fail

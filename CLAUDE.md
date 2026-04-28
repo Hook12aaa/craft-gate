@@ -7,12 +7,14 @@ This file is for anyone modifying the craftsmanship-test plugin itself. End-user
 - `.claude-plugin/plugin.json` — plugin manifest
 - `.claude-plugin/marketplace.json` — local marketplace descriptor (required for `claude plugins marketplace add`)
 - `skills/craft-gate/SKILL.md` — the imperative-judgment gate skill (KEEP / STRIP / REWRITE per comment)
-- `hooks/hooks.json` — declares PreToolUse matcher
-- `hooks/pre-tool-use` — bash entry point: extracts tool_name + file_path via inline python3, checks file extension, emits reminder
-- `hooks/lib/detect-source-file.sh` — `craft_path_triggers` and `_glob_to_regex` helpers (ported from channelle-test)
-- `hooks/lib/emit-context.sh` — JSON-safe context emitter (ported verbatim from channelle-test)
-- `config.sh` — default `CRAFT_SOURCE_GLOBS` (override per-project via `.craftsmanship-test.sh`)
-- `claude-md-snippet.md` — markdown the user pastes into their CLAUDE.md for passive reinforcement
+- `skills/using-craftsmanship-test/SKILL.md` — bootstrap skill, inlined into SessionStart payload
+- `hooks/hooks.json` — declares SessionStart and PreToolUse matchers
+- `hooks/session-start` — bash entry: emits the using- skill body if project-type detector returns CODE_PROJECT, silent otherwise
+- `hooks/pre-tool-use` — bash entry: gates on project-type verdict, then on file extension, then emits reminder
+- `hooks/lib/detect-project-type.sh` — `craft_detect_project_type` with educational denylist (ported from channelle-test pattern)
+- `hooks/lib/detect-source-file.sh` — `craft_path_triggers` and `_glob_to_regex` helpers
+- `hooks/lib/emit-context.sh` — JSON-safe context emitter
+- `config.sh` — default `CRAFT_SOURCE_GLOBS` (override per-project via `.craftsmanship-test.sh`, which also recognises `CRAFTSMANSHIP_PROJECT_TYPE`)
 - `commands/craft-check.md` — `/craft-check` slash command for on-demand evaluation
 - `tests/` — shell-based tests for every hook + helper, plus dogfood scenarios
 
@@ -40,17 +42,19 @@ The gate lives in `skills/craft-gate/SKILL.md`. Edits to that file do not requir
 
 Three layers, deliberately separated:
 
-1. **Passive (CLAUDE.md snippet)** — rules in system context. Free per turn. Survives compaction.
-2. **Trigger (PreToolUse hook)** — fires on source-file edits. Purely syntactic (extension match), no JSON content parsing. Dumb on purpose.
+1. **Auto-load (SessionStart hook)** — emits the `using-craftsmanship-test` skill body as system context every session, gated on the project-type detector. Replaces the manual snippet-paste flow.
+2. **Trigger (PreToolUse hook)** — gates on project-type verdict first, then file extension. Purely syntactic; no JSON content parsing in the hook itself.
 3. **Judgment (craft-gate skill)** — LLM applies imperative rules to its own comments. Smart on purpose.
 
-The hook does NOT detect bad comments. It detects that Claude is editing a source file. Claude itself checks for comment presence and invokes the skill if needed.
+The hook does NOT detect bad comments. It detects that Claude is editing a source file in a code project. Claude itself checks for comment presence and invokes the skill if needed.
+
+The project-type detector uses denylist semantics: default `CODE_PROJECT`, only `SUPPRESS` on strong educational signals (`_quarto.yml`, `book.toml`, `_bookdown.yml`, `_config.yml` with jupyter-book/bookdown markers, `mkdocs.yml` without a source dir, or notebook-dominant ratio). Override via `CRAFTSMANSHIP_PROJECT_TYPE` in the project's `.craftsmanship-test.sh`.
 
 ## Sibling plugin
 
 Mirrors `channelle-test`. Shape is identical except:
-- No SessionStart auto-load (replaced by CLAUDE.md snippet)
 - No UserPromptSubmit (purely syntactic trigger)
-- One skill instead of two (no bootstrap)
+- Two skills (`craft-gate` for judgment, `using-craftsmanship-test` for bootstrap)
 - Source-file globs instead of customer-view globs
-- Verdict vocabulary: KEEP / STRIP / REWRITE per comment instead of SHIP / REWORK / DROP per design decision
+- Project-type detector uses denylist semantics (default `CODE_PROJECT`, suppress on educational signals) instead of allowlist
+- Verdict vocabulary: `CODE_PROJECT` / `SUPPRESS` for project-type and `KEEP` / `STRIP` / `REWRITE` per comment instead of `PUBLIC_APP` / `SUPPRESS` and `SHIP` / `REWORK` / `DROP`
