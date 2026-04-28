@@ -1,0 +1,14 @@
+{
+  "session_id": "test-session",
+  "transcript_path": "/tmp/test",
+  "cwd": "/abs/path",
+  "permission_mode": "default",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "Edit",
+  "tool_input": {
+    "file_path": "/abs/path/README.md",
+    "old_string": "Hello",
+    "new_string": "Hello world"
+  },
+  "tool_use_id": "toolu_test_002"
+}

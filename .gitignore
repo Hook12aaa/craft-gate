@@ -1,0 +1,8 @@
+.DS_Store
+*.swp
+*.swo
+.envrc
+node_modules/
+__pycache__/
+craft-gate-workspace/
+feedback.json

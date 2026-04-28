@@ -1,0 +1,26 @@
+{
+  "skill_name": "craft-gate",
+  "evals": [
+    {
+      "id": 1,
+      "name": "paraphrase-strip",
+      "prompt": "Evaluate this Python code's comment for shipping:\n\n```python\n# increment counter by 1\ncounter += 1\n```\n\nDecide whether the comment should ship. State your verdict (KEEP / STRIP / REWRITE) and produce the revised code if any change is needed.",
+      "expected_output": "Verdict: STRIP (paraphrases the code). Comment deleted in revised version, leaving just `counter += 1`.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "public-api-docstring-keep",
+      "prompt": "Write a Python function `charge_customer(card_id, amount_cents)` with a docstring. The docstring should document parameters, what exceptions are raised on declined cards, and idempotency behavior (via a Stripe-Idempotency-Key header retried within 30s). Then evaluate whether the docstring should ship and state your verdict.",
+      "expected_output": "Verdict: KEEP. The docstring documents params, exceptions raised, and idempotency invariants the caller cannot infer from the signature — qualifies as a public-API contract docstring.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "partial-why-rewrite",
+      "prompt": "Evaluate this Python code's comment:\n\n```python\n# subtract 1 from timestamp because of NTP rollover bug\nnormalized = ts - 1\n```\n\nDecide whether the comment should ship as-is, be stripped, or rewritten. State your verdict (KEEP / STRIP / REWRITE) and provide the revised code/comment.",
+      "expected_output": "Verdict: REWRITE. Comment has partial 'why' but is too vague — should name the rollover date (2024-11), the affected weekday/condition (Tuesday), and that subtraction is the documented workaround.",
+      "files": []
+    }
+  ]
+}

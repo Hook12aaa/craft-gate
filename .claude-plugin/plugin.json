@@ -1,0 +1,10 @@
+{
+  "name": "craftsmanship-test",
+  "description": "The Craft Gate — every comment authored or modified in code must pass a craftsmanship gate (KEEP / STRIP / REWRITE) before the edit completes. Self-fires on Edit/Write/MultiEdit to source files.",
+  "version": "0.1.0",
+  "author": { "name": "hook" },
+  "license": "MIT",
+  "homepage": "https://github.com/hook/craftsmanship-test",
+  "repository": "https://github.com/hook/craftsmanship-test",
+  "keywords": ["code-quality", "comments", "craftsmanship", "skills", "hooks"]
+}

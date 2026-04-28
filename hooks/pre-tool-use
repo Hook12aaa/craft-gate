@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# PreToolUse hook: self-triggers the craft-gate reminder when Claude
+# is about to Edit or Write a source-code file.
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# shellcheck source=/dev/null
+source "${PLUGIN_ROOT}/config.sh"
+if [ -n "${CLAUDE_PROJECT_DIR:-}" ] && [ -f "${CLAUDE_PROJECT_DIR}/.craftsmanship-test.sh" ]; then
+  override="${CLAUDE_PROJECT_DIR}/.craftsmanship-test.sh"
+  # Validate the override parses before sourcing — a syntax error must not block edits
+  if bash -n "$override" 2>/dev/null; then
+    # shellcheck source=/dev/null
+    source "$override"
+  else
+    printf 'craftsmanship-test: ignoring malformed override at %s\n' "$override" >&2
+  fi
+fi
+# shellcheck source=/dev/null
+source "${SCRIPT_DIR}/lib/detect-source-file.sh"
+
+# Read stdin into a bash var first so the heredoc does not displace it,
+# then extract tool_name and file_path via python3.
+payload="$(cat)"
+read_payload=$(HOOK_PAYLOAD="$payload" python3 - <<'PY'
+import json, os
+try:
+    data = json.loads(os.environ.get("HOOK_PAYLOAD", "") or "{}")
+except Exception:
+    data = {}
+tool = data.get("tool_name", "")
+file_path = (data.get("tool_input", {}) or {}).get("file_path", "")
+print(f"{tool}\t{file_path}")
+PY
+)
+
+tool_name="${read_payload%%$'\t'*}"
+file_path="${read_payload##*$'\t'}"
+
+should_trigger=false
+case "$tool_name" in
+  Edit|Write|MultiEdit)
+    if [ -n "$file_path" ] && craft_path_triggers "$file_path"; then
+      should_trigger=true
+    fi
+    ;;
+esac
+
+if $should_trigger; then
+  reminder=$(cat <<EOF
+<EXTREMELY_IMPORTANT>
+CRAFT GATE AUTO-TRIGGERED.
+
+You are about to ${tool_name} \`${file_path}\`. If this edit adds or modifies any comment in the code (lines starting with \`#\`, \`//\`, \`/*\`, \`"""\`, \`'''\`, or \`<!--\`), invoke the \`craftsmanship-test:craft-gate\` skill via the Skill tool on each new/modified comment before this tool call completes. If this is a MultiEdit, apply the gate per sub-edit; do not stop after the first comment.
+
+If the verdict on any comment is STRIP or REWRITE, revise the edit before proceeding. Never skip the gate silently when comments are present.
+
+If this edit contains no new or modified comments, proceed.
+</EXTREMELY_IMPORTANT>
+EOF
+)
+  printf '%s' "$reminder" | bash "${SCRIPT_DIR}/lib/emit-context.sh" PreToolUse
+else
+  printf '' | bash "${SCRIPT_DIR}/lib/emit-context.sh" PreToolUse
+fi

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "craftsmanship-test-local",
+  "description": "Local marketplace for the Craftsmanship Test plugin.",
+  "owner": { "name": "hook" },
+  "plugins": [
+    {
+      "name": "craftsmanship-test",
+      "description": "The Craft Gate — comments must earn KEEP before they ship.",
+      "category": "code-quality",
+      "source": "./",
+      "keywords": ["code-quality", "comments", "craftsmanship", "skills"]
+    }
+  ]
+}
