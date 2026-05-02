@@ -30,7 +30,7 @@ assert_nested_field() {
 
 assert_field "${PLUGIN_ROOT}/.claude-plugin/plugin.json" "name" "craftsmanship-test"
 assert_field "${PLUGIN_ROOT}/.claude-plugin/plugin.json" "version" "0.1.0"
-assert_field "${PLUGIN_ROOT}/.claude-plugin/marketplace.json" "name" "craftsmanship-test-local"
+assert_field "${PLUGIN_ROOT}/.claude-plugin/marketplace.json" "name" "craft-gate"
 assert_nested_field "${PLUGIN_ROOT}/.claude-plugin/marketplace.json" \
   "d['plugins'][0]['name']" "craftsmanship-test"
 

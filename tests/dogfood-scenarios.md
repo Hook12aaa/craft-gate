@@ -8,8 +8,7 @@ The skill body's behavior is evaluated by Claude at runtime, so it cannot be uni
 # Pre-req: add the local marketplace (run once from the plugin root)
 claude plugins marketplace add .
 
-claude plugins install craftsmanship-test@craftsmanship-test-local
-cat claude-md-snippet.md >> ~/.claude/CLAUDE.md
+claude plugins install craftsmanship-test@craft-gate
 ```
 
 ## Scenarios

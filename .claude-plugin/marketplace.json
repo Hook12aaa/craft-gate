@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "craftsmanship-test-local",
-  "description": "Local marketplace for the Craftsmanship Test plugin.",
+  "name": "craft-gate",
+  "description": "Marketplace for the Craftsmanship Test plugin.",
   "owner": { "name": "hook" },
   "plugins": [
     {

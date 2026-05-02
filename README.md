@@ -24,16 +24,16 @@ Trigger lives in regex. Judgment lives in the LLM.
 
 ## Quickstart
 
-```bash
-claude plugins marketplace add /path/to/craft-gate
-claude plugins install craftsmanship-test@craftsmanship-test-local
+Inside any Claude Code session:
+
+```
+/plugin marketplace add Hook12aaa/craft-gate
+/plugin install craftsmanship-test@craft-gate
 ```
 
-The plugin loads its rules into context automatically at session start. There is no manual paste step.
+That's it. No git clone, no symlink, no manual paste. The plugin loads its rules into context at every session start.
 
 By default the gate runs on any project that looks like a code project. It stays silent on educational projects (Quarto books, mdBook, Jupyter Book, mkdocs-only sites, notebook-dominant repos). Override per-project by creating a `.craftsmanship-test.sh` at the project root with `CRAFTSMANSHIP_PROJECT_TYPE=code-project` (force enable) or `CRAFTSMANSHIP_PROJECT_TYPE=suppress` (force silent).
-
-If your path has spaces, symlink it first.
 
 If you previously pasted the snippet into your project's `CLAUDE.md`, remove it. The rules now load via SessionStart.
 
